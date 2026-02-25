@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Covenant Path Tic‑Tac‑Toe</title>
+  <style>
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      display:flex;
+      min-height:100vh;
+      align-items:center;
+      justify-content:center;
+      background:#f6f3ee;
+      color:#1d1d1f;
+    }
+    .card{
+      width:min(600px, 94vw);
+      background:#ffffff;
+      border:1px solid #e6e2dc;
+      border-radius:16px;
+      padding:18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.08);
+    }
+    h1{ margin:0; font-size:18px; }
+    .sub{ margin-top:6px; font-size:12px; color:#5a5a5f; line-height:1.35; }
+    .top{
+      display:flex; gap:12px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+    .pillrow{ display:flex; gap:8px; flex-wrap:wrap; }
+    .pill{
+      font-size:12px;
+      border:1px solid #e6e2dc;
+      background:#fbfaf8;
+      padding:6px 10px;
+      border-radius:999px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+      margin: 12px 0 14px 0;
+    }
+    button.cell{
+      aspect-ratio: 1/1;
+      border-radius:14px;
+      border:1px solid #e6e2dc;
+      background:#fbfaf8;
+      cursor:pointer;
+      font-size:26px;
+      font-weight:900;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      user-select:none;
+    }
+    button.cell:hover{ background:#f4f1ec; }
+    button.cell:disabled{ cursor:not-allowed; opacity: .95; }
+    .tag{
+      position:absolute;
+      bottom:8px; left:10px;
+      font-size:10px;
+      letter-spacing:.2px;
+      color:#7a7a82;
+      font-weight:750;
+    }
+    .status{
+      font-weight:850;
+      font-size:13px;
+      margin-top:6px;
+    }
+    .stats{
+      margin-top:8px;
+      font-size:12px;
+      color:#5a5a5f;
+      line-height:1.4;
+    }
+    .btnrow{
+      display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; align-items:center;
+      margin-top:10px;
+    }
+    .btn{
+      cursor:pointer;
+      border:1px solid #e6e2dc;
+      background:#ffffff;
+      padding:10px 12px;
+      border-radius:12px;
+      font-weight:850;
+      font-size:12px;
+    }
+    .btn:hover{ background:#fbfaf8; }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; }
+    .tiny{ font-size:11px; color:#7a7a82; margin-top:10px; line-height:1.35; }
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:11px;
+      border:1px solid #e6e2dc;
+      padding:1px 6px;
+      border-radius:8px;
+      background:#fbfaf8;
+    }
+
+    /* Overlay */
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.45);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+    }
+    .modal{
+      width:min(520px, 96vw);
+      background:#ffffff;
+      border:1px solid #e6e2dc;
+      border-radius:16px;
+      padding:16px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.20);
+    }
+    .modal h2{ margin:0; font-size:16px; }
+    .modal p{ margin:8px 0 10px 0; font-size:12px; color:#5a5a5f; line-height:1.35; }
+    textarea{
+      width:100%;
+      min-height: 110px;
+      resize: vertical;
+      border:1px solid #e6e2dc;
+      border-radius:12px;
+      padding:10px;
+      font-family: inherit;
+      font-size:13px;
+      background:#fbfaf8;
+      outline:none;
+    }
+    textarea:focus{ border-color:#d8d2c9; box-shadow: 0 0 0 3px rgba(220,210,195,.35); }
+    .modal .row{
+      display:flex;
+      gap:10px;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-top: 10px;
+    }
+    .count{ font-size:11px; color:#7a7a82; }
+    .error{ font-size:12px; color:#8a3b3b; font-weight:700; display:none; margin-top:8px; }
+    .list{
+      margin-top: 10px;
+      border-top: 1px solid #eeeae4;
+      padding-top: 10px;
+      font-size: 12px;
+      color:#44444a;
+      line-height:1.35;
+    }
+    .list li{ margin: 6px 0; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="top">
+      <div>
+        <h1>🕊️ Covenant Path Tic‑Tac‑Toe</h1>
+        <div class="sub">
+          LDS-themed tic‑tac‑toe with uplifting principles on each square.
+          <br><strong>Unique move:</strong> <em>Renewed Resolve</em> (once per round) lets you overwrite a square, but adds <em>Fatigue</em>.
+          <br><strong>Reflection twist:</strong> After a win, the losing player types one thing they’re grateful for about the Church.
+        </div>
+      </div>
+      <div class="pillrow">
+        <div class="pill">Player 1: <strong>CTR</strong></div>
+        <div class="pill">Player 2: <strong>FOLLOW</strong></div>
+      </div>
+    </div>
+
+    <div class="grid" id="grid" aria-label="Tic tac toe grid"></div>
+
+    <div class="status" id="status">Loading…</div>
+    <div class="stats" id="stats"></div>
+
+    <div class="btnrow">
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn" id="btnResolve" title="Once per round: overwrite an occupied square (adds Fatigue)">Renewed Resolve</button>
+        <button class="btn" id="btnNew">New Round</button>
+        <button class="btn" id="btnReset">Reset Scores</button>
+      </div>
+      <div class="tiny">
+        Shortcuts: <span class="kbd">H</span> Resolve • <span class="kbd">N</span> New • <span class="kbd">R</span> Reset • <span class="kbd">1–9</span> Place
+      </div>
+    </div>
+
+    <div class="tiny">
+      <strong>Fatigue rule:</strong> If your Fatigue reaches 2, you skip your next turn (rest + refocus).
+    </div>
+  </div>
+
+  <!-- Gratitude Modal -->
+  <div class="overlay" id="overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="gratTitle">
+      <h2 id="gratTitle">Gratitude check‑in</h2>
+      <p id="gratPrompt">Before the next round, the losing player shares one thing they’re grateful for about the Church.</p>
+      <textarea id="gratText" placeholder="Example: I’m grateful for..." maxlength="240"></textarea>
+      <div class="error" id="gratError">Please write at least a few words before submitting.</div>
+      <div class="row">
+        <div class="count" id="gratCount">0/240 • Tip: Press Ctrl/Cmd+Enter to submit</div>
+        <button class="btn" id="gratSubmit">Submit</button>
+      </div>
+      <div class="list">
+        <strong>Recent gratitude notes (saved on this device):</strong>
+        <ul id="gratList"></ul>
+      </div>
+      <p style="margin:10px 0 0 0;" class="count">Note: This is stored locally in your browser (localStorage).</p>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const TAGS = ['Faith','Prayer','Scripture','Service','Covenants','Temple','Family','Repentance','Charity'];
+  const WINS = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+
+  const gridEl = document.getElementById('grid');
+  const statusEl = document.getElementById('status');
+  const statsEl = document.getElementById('stats');
+  const btnResolve = document.getElementById('btnResolve');
+  const btnNew = document.getElementById('btnNew');
+  const btnReset = document.getElementById('btnReset');
+
+  const overlay = document.getElementById('overlay');
+  const gratPrompt = document.getElementById('gratPrompt');
+  const gratText = document.getElementById('gratText');
+  const gratCount = document.getElementById('gratCount');
+  const gratSubmit = document.getElementById('gratSubmit');
+  const gratList = document.getElementById('gratList');
+  const gratError = document.getElementById('gratError');
+
+  let board, turn, locked, scores, resolveAvail, fatigue, skipNext, resolveMode, lastWin;
+  let pendingLoser = null; // who must write gratitude before next round
+
+  function buildGrid() {
+    gridEl.innerHTML = '';
+    for (let i=0;i<9;i++) {
+      const b = document.createElement('button');
+      b.className = 'cell';
+      b.setAttribute('aria-label', `Cell ${i+1}`);
+      b.addEventListener('click', () => onCell(i));
+      const tag = document.createElement('div');
+      tag.className = 'tag';
+      tag.textContent = TAGS[i];
+      b.appendChild(tag);
+      gridEl.appendChild(b);
+    }
+  }
+
+  function resetRound(keepScores=true) {
+    board = Array(9).fill('');
+    turn = 'CTR';
+    locked = false;
+    resolveAvail = { CTR: true, FOLLOW: true };
+    fatigue = { CTR: 0, FOLLOW: 0 };
+    skipNext = { CTR: false, FOLLOW: false };
+    resolveMode = false;
+    lastWin = null;
+    if (!keepScores) scores = { CTR: 0, FOLLOW: 0 };
+    render();
+  }
+
+  function currentPlayerName(p) { return p === 'CTR' ? 'Player 1 (CTR)' : 'Player 2 (FOLLOW)'; }
+  function other(p){ return p === 'CTR' ? 'FOLLOW' : 'CTR'; }
+
+  function checkWinner() {
+    for (const line of WINS) {
+      const [a,b,c] = line;
+      if (board[a] && board[a] === board[b] && board[a] === board[c]) return { winner: board[a], line };
+    }
+    if (board.every(v => v)) return { winner: 'DRAW', line: null };
+    return null;
+  }
+
+  function endRound(result) {
+    locked = true;
+    resolveMode = false;
+    lastWin = result.line;
+
+    if (result.winner === 'DRAW') {
+      statusEl.textContent = 'Draw — try a new round.';
+      statsEl.textContent = `Score: CTR ${scores.CTR} • FOLLOW ${scores.FOLLOW}`;
+      btnResolve.disabled = true;
+      btnNew.disabled = false;
+      renderGrid();
+      return;
+    }
+
+    scores[result.winner] += 1;
+    const loser = other(result.winner);
+    pendingLoser = loser;
+
+    statusEl.textContent = `${currentPlayerName(result.winner)} wins! ✅`;
+    const words = result.line.map(i => TAGS[i]).join(' → ');
+    statsEl.textContent = `Winning line: ${words} • Score: CTR ${scores.CTR} • FOLLOW ${scores.FOLLOW}`;
+
+    btnResolve.disabled = true;
+    btnNew.disabled = true; // must submit gratitude first
+    renderGrid();
+
+    openGratitudeModal(loser);
+  }
+
+  function advanceTurn() { turn = other(turn); }
+
+  function onCell(i) {
+    if (locked) return;
+    if (skipNext[turn]) { // rest turn
+      skipNext[turn] = false;
+      advanceTurn();
+      render();
+      return;
+    }
+
+    if (!resolveMode) {
+      if (board[i]) return;
+      board[i] = turn;
+    } else {
+      board[i] = turn; // overwrite
+      resolveAvail[turn] = false;
+      resolveMode = false;
+      fatigue[turn] = Math.min(2, fatigue[turn] + 1);
+      if (fatigue[turn] >= 2) skipNext[turn] = true;
+    }
+
+    const result = checkWinner();
+    if (result) { endRound(result); return; }
+
+    advanceTurn();
+    render();
+  }
+
+  function renderGrid() {
+    const cells = [...gridEl.querySelectorAll('button.cell')];
+    cells.forEach((c, i) => {
+      c.disabled = locked;
+      c.textContent = board[i] || '';
+      c.style.outline = '';
+      if (lastWin && lastWin.includes(i)) c.style.outline = '3px solid rgba(40,40,50,0.25)';
+    });
+  }
+
+  function render() {
+    renderGrid();
+    const scoreLine = `Score: CTR ${scores.CTR} • FOLLOW ${scores.FOLLOW}`;
+
+    if (locked) {
+      // status already set
+    } else if (skipNext[turn]) {
+      statusEl.textContent = `${currentPlayerName(turn)} rests and skips this turn.`;
+      statsEl.textContent = scoreLine;
+      btnResolve.disabled = true;
+    } else if (resolveMode) {
+      statusEl.textContent = `${currentPlayerName(turn)}: Renewed Resolve armed — click ANY square to overwrite.`;
+      statsEl.textContent = `Fatigue: CTR ${fatigue.CTR}/2 • FOLLOW ${fatigue.FOLLOW}/2 • ${scoreLine}`;
+      btnResolve.disabled = true;
+    } else {
+      statusEl.textContent = `${currentPlayerName(turn)}'s turn.`;
+      statsEl.textContent = `Fatigue: CTR ${fatigue.CTR}/2 • FOLLOW ${fatigue.FOLLOW}/2 • ${scoreLine}`;
+      btnResolve.disabled = !resolveAvail[turn];
+    }
+
+    btnNew.disabled = (pendingLoser !== null);
+  }
+
+  // ---------- Gratitude storage ----------
+  function loadNotes() {
+    try {
+      const raw = localStorage.getItem('covenantpath_gratitude');
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+  }
+  function saveNotes(notes) {
+    try { localStorage.setItem('covenantpath_gratitude', JSON.stringify(notes.slice(0, 8))); } catch {}
+  }
+  function refreshNotesUI() {
+    const notes = loadNotes();
+    gratList.innerHTML = '';
+    if (notes.length === 0) {
+      const li = document.createElement('li');
+      li.textContent = 'No notes yet.';
+      gratList.appendChild(li);
+      return;
+    }
+    notes.slice(0, 8).forEach(n => {
+      const li = document.createElement('li');
+      li.textContent = n;
+      gratList.appendChild(li);
+    });
+  }
+
+  function openGratitudeModal(loser) {
+    gratError.style.display = 'none';
+    gratText.value = '';
+    gratCount.textContent = '0/240 • Tip: Press Ctrl/Cmd+Enter to submit';
+    gratPrompt.textContent = `${currentPlayerName(loser)}, type one thing you’re grateful for about the Church before the next round.`;
+    refreshNotesUI();
+    overlay.style.display = 'flex';
+    overlay.setAttribute('aria-hidden', 'false');
+    setTimeout(() => gratText.focus(), 0);
+  }
+
+  function closeGratitudeModal() {
+    overlay.style.display = 'none';
+    overlay.setAttribute('aria-hidden', 'true');
+  }
+
+  gratText.addEventListener('input', () => {
+    gratError.style.display = 'none';
+    gratCount.textContent = `${gratText.value.length}/240 • Tip: Press Ctrl/Cmd+Enter to submit`;
+  });
+
+  // Submit helpers
+  function submitGratitude() {
+    const text = gratText.value.trim();
+    if (!text || text.length < 3) {
+      gratError.style.display = 'block';
+      gratText.focus();
+      return;
+    }
+
+    gratSubmit.disabled = true;
+    const notes = loadNotes();
+    notes.unshift(text);
+    saveNotes(notes);
+
+    // Make it super obvious that something happened:
+    gratText.value = 'Saved ✅';
+    refreshNotesUI();
+
+    // Close + auto-start new round shortly after
+    setTimeout(() => {
+      closeGratitudeModal();
+      pendingLoser = null;
+      gratSubmit.disabled = false;
+      resetRound(true); // start next round automatically (clear win lock)
+    }, 250);
+  }
+
+  gratSubmit.addEventListener('click', submitGratitude);
+
+  gratText.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') submitGratitude();
+  });
+
+  // Prevent dismiss by clicking outside (must submit)
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) { /* no-op */ }
+  });
+
+  // ---------- Controls ----------
+  btnResolve.addEventListener('click', () => {
+    if (locked) return;
+    if (!resolveAvail[turn]) return;
+    if (skipNext[turn]) return;
+    resolveMode = true;
+    render();
+  });
+
+  btnNew.addEventListener('click', () => {
+    if (pendingLoser !== null) return;
+    resetRound(true);
+  });
+
+  btnReset.addEventListener('click', () => {
+    pendingLoser = null;
+    resetRound(false);
+  });
+
+  window.addEventListener('keydown', (e) => {
+    const k = e.key.toLowerCase();
+    if (overlay.style.display === 'flex') return;
+    if (k === 'n') btnNew.click();
+    if (k === 'r') btnReset.click();
+    if (k === 'h') btnResolve.click();
+    if (k >= '1' && k <= '9') onCell(Number(k)-1);
+  });
+
+  // Init
+  scores = { CTR: 0, FOLLOW: 0 };
+  buildGrid();
+  resetRound(true);
+  refreshNotesUI();
+})();
+</script>
+</body>
+</html>
