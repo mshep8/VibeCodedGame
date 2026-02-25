@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LDS Tic‑Tac‑Toe: Covenant Path</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      display:flex; min-height:100vh; align-items:center; justify-content:center;
+      background: radial-gradient(1100px 620px at 50% 15%, rgba(255,215,140,.20), transparent 60%),
+                  radial-gradient(900px 600px at 20% 85%, rgba(160,210,255,.18), transparent 55%),
+                  radial-gradient(900px 600px at 80% 85%, rgba(180,255,210,.14), transparent 55%);
+    }
+    .wrap { width: min(920px, 96vw); display:grid; gap: 14px; }
+    header { display:flex; align-items:baseline; justify-content:space-between; gap: 12px; flex-wrap:wrap; }
+    h1 { margin:0; font-size: 20px; }
+    .sub { font-size: 12px; opacity:.82; max-width: 56ch; }
+    .panel {
+      border: 1px solid rgba(127,127,127,.25);
+      border-radius: 18px;
+      padding: 14px;
+      background: rgba(0,0,0,.16);
+      box-shadow: 0 10px 30px rgba(0,0,0,.18);
+    }
+    .two {
+      display:grid;
+      grid-template-columns: 1fr 360px;
+      gap: 14px;
+      align-items:start;
+    }
+    @media (max-width: 860px) { .two { grid-template-columns: 1fr; } }
+
+    .grid {
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    button.cell {
+      border-radius: 18px;
+      border: 1px solid rgba(127,127,127,.28);
+      background: rgba(255,255,255,.06);
+      aspect-ratio: 1 / 1;
+      font-size: 44px;
+      font-weight: 900;
+      cursor:pointer;
+      transition: transform .07s ease, filter .1s ease;
+      user-select:none;
+      position: relative;
+      overflow:hidden;
+    }
+    button.cell:hover { filter: brightness(1.12); transform: translateY(-1px); }
+    button.cell:disabled { cursor:not-allowed; opacity: .92; }
+    .tag {
+      position:absolute; bottom: 10px; left: 12px;
+      font-size: 11px; font-weight: 750;
+      opacity: .68;
+      letter-spacing:.2px;
+    }
+    .hud { display:grid; grid-template-columns: 1fr; gap: 10px; }
+    .status { font-weight: 850; font-size: 14px; }
+    .small { font-size: 12px; opacity: .86; line-height: 1.35; }
+    .k { padding: 2px 6px; border-radius: 8px; border: 1px solid rgba(127,127,127,.35); font-size: 12px; }
+    .controls { display:flex; gap: 10px; flex-wrap:wrap; }
+    .btn {
+      cursor:pointer;
+      border: 1px solid rgba(127,127,127,.28);
+      background: rgba(255,255,255,.07);
+      padding: 10px 12px;
+      border-radius: 14px;
+      font-weight: 750;
+    }
+    .btn:hover { filter: brightness(1.12); }
+    .btn:disabled { opacity: .5; cursor:not-allowed; }
+
+    .meters { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .meter {
+      border: 1px solid rgba(127,127,127,.25);
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,.04);
+    }
+    .meter h3 { margin: 0 0 6px 0; font-size: 12px; opacity:.86; }
+    .bar { height: 14px; border-radius: 10px; background: rgba(255,255,255,.10); overflow:hidden; }
+    .fill { height: 100%; width: 0%; background: rgba(255,255,255,.78); }
+    .meta { font-variant-numeric: tabular-nums; font-size: 12px; opacity:.82; margin-top: 6px; }
+
+    .winline { margin-top: 10px; text-align:center; font-size: 12px; opacity: .82; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Tic‑Tac‑Toe: Covenant Path</h1>
+        <div class="sub">
+          A simple, respectful Church of Jesus Christ of Latter‑day Saints themed remix with a
+          “Renewed Resolve” mechanic (once per round).
+        </div>
+      </div>
+      <div class="sub">Shortcut: <span class="k">H</span> Renewed Resolve • <span class="k">N</span> New round • <span class="k">1–9</span> place</div>
+    </header>
+
+    <div class="panel two">
+      <div>
+        <div class="grid" id="grid" aria-label="Tic tac toe grid"></div>
+        <div class="winline" id="winline"></div>
+      </div>
+
+      <div class="hud">
+        <div class="status" id="status">Loading…</div>
+
+        <div class="meters">
+          <div class="meter">
+            <h3>🟦 PLAYER X — Resolve</h3>
+            <div class="bar"><div class="fill" id="resX"></div></div>
+            <div class="meta" id="metaX">Resolve used: 0/1 • Fatigue: 0/2</div>
+          </div>
+          <div class="meter">
+            <h3>🟩 PLAYER O — Resolve</h3>
+            <div class="bar"><div class="fill" id="resO"></div></div>
+            <div class="meta" id="metaO">Resolve used: 0/1 • Fatigue: 0/2</div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button class="btn" id="btnResolve" title="Once per round: overwrite an occupied square (adds Fatigue)">Renewed Resolve</button>
+          <button class="btn" id="btnNew">New Round</button>
+          <button class="btn" id="btnReset">Reset Scores</button>
+        </div>
+
+        <div class="small">
+          <strong>How to play:</strong> Click a square to place your marker. First to get three in a row wins.
+          <br><br>
+          <strong>Unique feature:</strong> <em>Renewed Resolve</em> — once per round, you may overwrite an occupied square
+          (a “second‑chance” moment). It adds <strong>Fatigue</strong>. If your Fatigue reaches 2, you must skip your next turn
+          (you’re “resting and re‑centering”).
+          <br><br>
+          <strong>Theme:</strong> Each square is labeled with a positive gospel‑oriented principle (e.g., Faith, Service, Prayer).
+          This is a light theme layer only — the game is still standard Tic‑Tac‑Toe plus the unique mechanic.
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const gridEl = document.getElementById('grid');
+  const statusEl = document.getElementById('status');
+  const winlineEl = document.getElementById('winline');
+  const btnResolve = document.getElementById('btnResolve');
+  const btnNew = document.getElementById('btnNew');
+  const btnReset = document.getElementById('btnReset');
+  const resXFill = document.getElementById('resX');
+  const resOFill = document.getElementById('resO');
+  const metaX = document.getElementById('metaX');
+  const metaO = document.getElementById('metaO');
+
+  const TAGS = ['Faith','Service','Prayer','Scripture','Covenants','Temple','Family','Repentance','Charity'];
+  const WINS = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+
+  let board, turn, locked, scores, resolve, fatigue, skipNext, resolveMode, lastWinLine;
+
+  // Tiny synth sounds (optional, no music)
+  let soundOn = true;
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  let ac = null;
+  function beep(freq=520, dur=0.06, type='sine', gain=0.035) {
+    if (!soundOn) return;
+    if (!ac) ac = new AudioCtx();
+    const now = ac.currentTime;
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, now);
+    g.gain.setValueAtTime(gain, now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    o.connect(g).connect(ac.destination);
+    o.start(now);
+    o.stop(now + dur);
+  }
+
+  function buildGrid() {
+    gridEl.innerHTML = '';
+    for (let i=0;i<9;i++) {
+      const b = document.createElement('button');
+      b.className = 'cell';
+      b.setAttribute('aria-label', `Cell ${i+1}`);
+      b.addEventListener('click', () => onCell(i));
+      const tag = document.createElement('div');
+      tag.className = 'tag';
+      tag.textContent = TAGS[i];
+      b.appendChild(tag);
+      gridEl.appendChild(b);
+    }
+  }
+
+  function resetRound(keepScores=true) {
+    board = Array(9).fill('');
+    turn = 'X';
+    locked = false;
+    resolve = { X: true, O: true };     // once per round per player
+    fatigue = { X: 0, O: 0 };           // 0..2
+    skipNext = { X: false, O: false };  // maintenance/rest turn
+    resolveMode = false;
+    lastWinLine = null;
+    if (!keepScores) scores = { X: 0, O: 0 };
+    render();
+  }
+
+  function checkWinner() {
+    for (const line of WINS) {
+      const [a,b,c] = line;
+      if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+        return { winner: board[a], line };
+      }
+    }
+    if (board.every(v => v)) return { winner: 'DRAW', line: null };
+    return null;
+  }
+
+  function endRound(result) {
+    locked = true;
+    resolveMode = false;
+    lastWinLine = result.line;
+
+    if (result.winner === 'DRAW') {
+      statusEl.textContent = `🤝 Draw — start a new round? (Score — X: ${scores.X} • O: ${scores.O})`;
+      winlineEl.textContent = `No three‑in‑a‑row this time.`;
+      beep(300, 0.08, 'square', 0.03);
+      beep(260, 0.09, 'square', 0.03);
+    } else {
+      scores[result.winner] += 1;
+      const who = result.winner === 'X' ? '🟦 Player X' : '🟩 Player O';
+      statusEl.textContent = `${who} wins ✅ (Score — X: ${scores.X} • O: ${scores.O})`;
+      winlineEl.textContent = `Winning line: ${result.line.map(i => TAGS[i]).join(' → ')}`;
+      beep(660, 0.06, 'triangle', 0.045);
+      beep(990, 0.06, 'triangle', 0.045);
+    }
+
+    btnResolve.disabled = true;
+    render();
+  }
+
+  function advanceTurn() { turn = (turn === 'X') ? 'O' : 'X'; }
+
+  function applyFatigueIfNeeded(player) {
+    if (fatigue[player] >= 2) skipNext[player] = true;
+  }
+
+  function onCell(i) {
+    if (locked) return;
+
+    // If current player must skip a turn due to fatigue
+    if (skipNext[turn]) {
+      skipNext[turn] = false;
+      beep(220, 0.08, 'sawtooth', 0.028);
+      advanceTurn();
+      render();
+      return;
+    }
+
+    if (!resolveMode) {
+      if (board[i]) { beep(160, 0.05, 'square', 0.02); return; }
+      board[i] = turn;
+      beep(turn === 'X' ? 520 : 440, 0.05, 'sine', 0.035);
+    } else {
+      // Renewed Resolve overwrite any square
+      board[i] = turn;
+      resolve[turn] = false;
+      resolveMode = false;
+      fatigue[turn] = Math.min(2, fatigue[turn] + 1);
+      applyFatigueIfNeeded(turn);
+      beep(740, 0.07, 'square', 0.045);
+      beep(220, 0.09, 'sawtooth', 0.04);
+    }
+
+    const result = checkWinner();
+    if (result) { endRound(result); return; }
+
+    advanceTurn();
+    render();
+  }
+
+  function render() {
+    const cells = [...gridEl.querySelectorAll('button.cell')];
+    cells.forEach((c, i) => {
+      c.disabled = locked;
+      c.textContent = board[i] || '';
+      const tag = c.querySelector('.tag');
+      if (tag) tag.textContent = TAGS[i];
+      c.style.outline = '';
+      if (lastWinLine && lastWinLine.includes(i)) {
+        c.style.outline = '3px solid rgba(255,255,255,0.55)';
+      }
+    });
+
+    const who = turn === 'X' ? '🟦 Player X' : '🟩 Player O';
+    const line2 = `Score — X: ${scores.X} • O: ${scores.O}`;
+
+    if (locked) {
+      // status set at endRound
+    } else if (skipNext[turn]) {
+      statusEl.textContent = `${who} is resting and will skip a turn. (${line2})`;
+      winlineEl.textContent = `Fatigue reached 2 on the previous move.`;
+      btnResolve.disabled = true;
+    } else if (resolveMode) {
+      statusEl.textContent = `${who}: Renewed Resolve armed — click ANY square to overwrite. (${line2})`;
+      winlineEl.textContent = `Note: This adds Fatigue (use wisely).`;
+      btnResolve.disabled = true;
+    } else {
+      statusEl.textContent = `${who}'s turn. (${line2})`;
+      winlineEl.textContent = `Unique move available: Renewed Resolve (${resolve[turn] ? 1 : 0} left this round).`;
+      btnResolve.disabled = !resolve[turn];
+    }
+
+    // meters
+    resXFill.style.width = `${(fatigue.X/2)*100}%`;
+    resOFill.style.width = `${(fatigue.O/2)*100}%`;
+    metaX.textContent = `Resolve used: ${resolve.X ? 0 : 1}/1 • Fatigue: ${fatigue.X}/2`;
+    metaO.textContent = `Resolve used: ${resolve.O ? 0 : 1}/1 • Fatigue: ${fatigue.O}/2`;
+  }
+
+  // Controls
+  btnResolve.addEventListener('click', () => {
+    if (locked) return;
+    if (!resolve[turn]) return;
+    if (skipNext[turn]) return;
+    resolveMode = true;
+    beep(600, 0.05, 'square', 0.03);
+    render();
+  });
+
+  btnNew.addEventListener('click', () => { resetRound(true); beep(520, 0.06, 'triangle', 0.04); });
+  btnReset.addEventListener('click', () => { resetRound(false); beep(420, 0.06, 'triangle', 0.04); });
+
+  // Keyboard shortcuts
+  window.addEventListener('keydown', (e) => {
+    const k = e.key.toLowerCase();
+    if (k === 'n') btnNew.click();
+    if (k === 'r') btnReset.click();
+    if (k === 'h') btnResolve.click();
+    if (k >= '1' && k <= '9') onCell(Number(k)-1);
+  });
+
+  // Init
+  scores = { X: 0, O: 0 };
+  buildGrid();
+  resetRound(true);
+})();
+</script>
+</body>
+</html>
